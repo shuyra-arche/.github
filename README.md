@@ -1,19 +1,19 @@
 # Shuyra community files
 
-This repository maintains the shared contribution rules and default community
+This repository maintains the engineering standards and default community
 templates for `shuyra-arche`.
 
-- [CONTRIBUTING.md](CONTRIBUTING.md): the single organization maintenance policy.
-- [Organization profile](profile/README.md): entry points for Anallia and Vanllia.
-- [Pull request template](.github/PULL_REQUEST_TEMPLATE.md): purpose, changes,
-  validation and impact.
-- [Issue templates](.github/ISSUE_TEMPLATE/): reproducible problems and scoped changes.
+- [Contributing](CONTRIBUTING.md) explains how to propose and verify a change.
+- [Documentation](docs/README.md) indexes the organization-wide standards.
+- [Pull request template](PULL_REQUEST_TEMPLATE.md) records changes, evidence,
+  compatibility and related work.
+- [Issue templates](.github/ISSUE_TEMPLATE/) cover reproducible problems and
+  scoped proposals.
+- [Organization profile](profile/README.md) introduces Shuyra's projects.
 
-Repository-local community files can override these defaults. They should link
-to the shared rules and add only necessary local detail. Branch protections,
-repository settings, Actions workflows, CODEOWNERS, AGENTS.md and licenses are
-configured in their applicable locations; this repository does not automatically
-install or enforce them.
+GitHub uses these community files as defaults for eligible repositories.
+Repository-local files can provide their own guidance or templates. Repository
+settings and branch protections are managed separately.
 
-These are documentation and templates. Review Markdown links and template fields
-when changing them; there is no build or runtime test entry in this repository.
+When changing this repository, review Markdown links, template fields and the
+consistency of the standards.
