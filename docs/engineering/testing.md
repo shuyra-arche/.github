@@ -36,19 +36,105 @@ and the remaining gap instead of adding a misleading test.
 
 | Scope | Responsibility | Preferred form |
 | --- | --- | --- |
-| Repository | Local logic, public contracts, and declared build targets | Native language tests and static checks |
+| Repository | Local logic, public contracts, and declared build targets | Host integration tests and target compilation |
 | Cluster | Behavior shared by selected providers or repositories | Minimal cross-provider scenario |
 | System | Composition, boot, and runtime behavior of the assembled system | Targeted QEMU or hardware scenario |
 
 A Cluster is a source/build organization boundary, not a runtime Unit. Its
 integration tests select the Units needed to establish a contract. Tests belong
-with the Package or integration owner responsible for the behavior, not in a
-central directory merely to mirror the source tree. A Package does not need a
-`tests/` directory unless it has tests that benefit from one.
+with the Package or integration owner responsible for the behavior. Cross-repository
+and system tests belong to the repository that composes the relevant providers
+or system.
 
-Test internal algorithms locally when they have independent, high-risk
-invariants. Prefer public boundaries for durable behavioral tests, so internal
-refactoring does not invalidate them.
+## Test code placement
+
+All executable test code, test fixtures, and test-only support code must live
+under a `tests/` directory in the owning Package or composition repository.
+Production source directories contain production code only.
+
+Do not place test modules or test bodies in `src/`. In particular, do not use
+inline `#[cfg(test)] mod tests`, `src/**/tests.rs`, or test-only fixture
+modules in production source. A Package does not need a `tests/` directory
+unless it has a meaningful test to maintain.
+
+Organize each test tree by domain and behavior, not by individual source file.
+Use a top-level Rust test file as the suite entry point and a same-named
+subdirectory for its child modules:
+
+```text
+server/
+├── src/
+│   └── ...
+└── tests/
+    ├── memory.rs
+    ├── memory/
+    │   ├── mapping.rs
+    │   ├── ownership.rs
+    │   └── fault.rs
+    ├── ipc.rs
+    ├── ipc/
+    │   ├── transfer.rs
+    │   └── communication.rs
+    └── support/
+        └── mod.rs
+```
+
+For example, `tests/memory.rs` declares `mod mapping;`, `mod ownership;`,
+and `mod fault;`. Cargo treats each `.rs` file directly under `tests/` as
+an integration-test target; nested files are modules of that target, not
+independent targets. Shared support belongs under `tests/` and is included only
+by the suites that use it. Do not create empty directories or mirror the entire
+source tree.
+
+For cross-repository or system scenarios, use the same convention in the
+composition owner:
+
+```text
+vanllia/
+└── tests/
+    ├── cluster.rs
+    ├── cluster/
+    │   └── kernel/
+    │       ├── memory.rs
+    │       └── memory/
+    │           └── transfer.rs
+    ├── system.rs
+    └── system/
+        ├── boot.rs
+        └── recovery.rs
+```
+
+The owning test entry point composes the nested modules. Do not create a
+parallel top-level `integration/` directory for test code.
+
+## no_std and Rust test execution
+
+Production libraries keep `#![no_std]` unconditionally. Do not use
+`#![cfg_attr(not(test), no_std)]` to make the library become `std` during
+testing.
+
+Cargo integration-test executables under `tests/` use the host test harness
+and may use `std`. The library under test is compiled as a normal dependency,
+so it retains its production `no_std` configuration. This allows host tests
+to exercise public behavior without changing the production crate's runtime
+requirements.
+
+Integration tests cannot access private implementation details. Verify those
+details through public behavior where possible. Do not expose private items
+solely to satisfy a test. If a complex algorithm deserves an independent public
+boundary for real production reasons, it may be extracted into a separate
+`no_std` Package and tested through that boundary.
+
+Host tests do not validate privileged instructions or target hardware behavior.
+For target-only behavior, place a standalone `no_std` guest test package under
+`tests/target/` when needed. Its entry point, panic handler, allocator, linker
+configuration, and result reporter belong to that test package, not to the
+production library. Run it in QEMU or on hardware. Do not introduce a guest
+runner before a real target-only scenario requires one.
+
+If the repository requires every automated test to be physically under
+`tests/`, disable Rust documentation tests for the relevant library target
+with `doctest = false`; keep executable examples in the test tree instead.
 
 ## Minimum integration scenario
 
@@ -57,8 +143,8 @@ refactoring does not invalidate them.
    such as System only when required to start or connect those Units.
 3. Replace external dependencies with fixtures only if the behavior under test
    remains real. Do not mock away the contract being verified.
-4. Use the owning integration project's existing entry point; record selected
-   Units, dependency revisions, toolchain, and execution command.
+4. Use the owning test suite's existing entry point; record selected Units,
+   dependency revisions, toolchain, and execution command.
 5. Assert the result and preserve enough evidence to reproduce a failure.
 
 Do not introduce a mandatory test DSL, manifest, orchestration service, or
