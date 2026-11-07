@@ -37,12 +37,18 @@ source dependency on the provider implementation.
 
 ## Versioning and lock files
 
-Prefer published packages with explicit version requirements. Pin
-cross-repository Git dependencies to full commit SHAs. Treat branch names and
-other movable references as development inputs only. Keep personal path
-overrides in local configuration. Track lock files for
-reproducibly built applications and integration projects. For libraries, use
-the repository's documented lock-file policy.
+Prefer published registry packages with explicit version requirements. For
+cross-repository Git dependencies, prefer the immutable release tag for a
+published source revision (`tag = "..."`). Use a full commit SHA (`rev = "..."`)
+for an unreleased or deliberately exact revision. Both pin a specific source
+revision only if the tag is kept fixed; protect published release tags from
+updates or deletion. If tag immutability cannot be assured, use a full commit
+SHA instead. Branches and other moving references are development inputs only.
+
+Commit lock files for reproducibly built applications and integration projects:
+Cargo records the resolved commit in `Cargo.lock` even when the manifest uses
+a Git tag. For libraries, use the repository's documented lock-file policy.
+Keep personal path overrides in local configuration.
 
 Describe the public package's compatibility guarantees. After a stable
 `1.0.0`, use SemVer for compatible additions, fixes and breaking changes. For
