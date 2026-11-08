@@ -20,6 +20,7 @@ organization. A Cluster name alone creates no requirement for a `cluster.toml`.
 | Location | Purpose |
 | --- | --- |
 | `README.md` | Current responsibilities, entry points, prerequisites and build and test commands |
+| `AGENTS.md` | Agent startup entry for shared standards and local instructions |
 | `LICENSE` | License for the repository, with any required notices and attribution |
 | `.gitignore` | Rules for generated and local files, when needed |
 | `.github/workflows/` | Repository-specific automation, when needed |
@@ -34,6 +35,11 @@ conditions and unsafe preconditions next to the relevant API. Use Issues for
 future work, PRs for change rationale and verification, and CI artifacts or
 release assets for raw evidence. Check code, tests and publishing references
 before removing stale documentation.
+
+Follow the [agent guidance convention](agent.md) for the root `AGENTS.md`.
+Keep shared policy in the organization standards and local guidance focused
+on entry points and exceptions. Organization community-file defaults do not
+automatically load agent instructions into other repositories.
 
 ## GitHub settings
 

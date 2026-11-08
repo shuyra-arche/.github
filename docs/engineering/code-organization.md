@@ -8,6 +8,52 @@ A reader should be able to find an object's state, invariants, valid
 transitions and principal behavior together. Do not make them reconstruct
 one concept from distant declarations and unrelated implementation files.
 
+## Keep invariant ownership explicit
+
+**Fragmented invariant ownership** means that a correctness rule depends on
+several callers remembering an agreement, with no clear owner
+that enforces it. This is an architectural problem even when the directory
+tree looks modular. Its symptoms include duplicated authoritative records,
+unrelated identities represented by the same integer, independently mutable
+fields that must change together, and cleanup that relies on a particular
+caller sequence.
+
+Align the semantic boundary with the state representation, transition
+interface and synchronization boundary:
+
+- Give each mutable fact one authoritative representation and each invariant
+  an explicit enforcing owner. Shared references can refer to that owner;
+  copied records must not become competing authorities. A snapshot is an
+  observation with a defined freshness contract, not live authorization.
+- Represent mutually exclusive states and their associated data together.
+  Use distinct types for values with different meanings, such as object
+  identity, hardware slot and revision. Independent concerns can remain
+  separate; moving arbitrary fields into a `State` or `Life` wrapper does
+  not establish an invariant.
+- Keep state private where possible and route every mutation path through
+  the enforcing interface. When separating a pure decision from effects,
+  specify what must be revalidated before application and who handles
+  partial failure or rollback. State the synchronization that prevents
+  observers from seeing an invalid intermediate state.
+- Make identity allocation and reuse policies explicit. Distinguish a
+  non-reusing sequence, a recyclable finite pool and a generational handle;
+  specify exhaustion and stale-reference behavior. Add a generational
+  allocator only when actual slot reuse and handle validation require it.
+- Model lifetime, authority, publication and safe reclamation separately
+  when their conditions differ. A reference count proves storage is still
+  retained, not that access remains authorized. Cancellation or business
+  completion alone does not prove asynchronous work can no longer touch
+  a resource; name the evidence required before reclamation.
+- For an invariant spanning several owners, identify the coordinating
+  operation and its commit, failure and concurrency rules. One semantic
+  owner does not require one global manager or one global lock.
+
+For example, a permission record should own revocation state rather than
+requiring every copied permission view to be updated. A hardware address-space
+slot that can be reused should not silently double as the stable identity
+of a software object. Fix the ownership and transition model before moving
+files or adding wrappers.
+
 ## Group by ownership and invariants
 
 - Organize around the object or mechanism that owns a state transition,
@@ -76,13 +122,16 @@ Before introducing or moving code, check:
    without searching across unrelated files?
 2. Does each extracted module own a genuine responsibility, rather
    than a syntactic category, operation verb or arbitrary slice?
-3. Are state transitions and the methods that apply them near the
-   objects whose correctness they determine?
+3. Who enforces each invariant, and can any construction or mutation path
+   bypass that owner? Are transitions near the state they govern?
 4. Does the layout remain understandable **inside** each module, type,
    implementation block and function, not only in the directory tree?
 5. Did the change preserve observable behavior, interfaces and safety
    invariants? If it changed semantics, is that change reviewed and
    verified separately?
+6. Which invalid combinations are excluded by types, and which need runtime
+   checks? Are failure, cancellation, stale references and exhaustion handled
+   at the relevant ownership boundary?
 
 Do not impose universal file-length, file-count or type-count limits.
 Optimize for local comprehension and stable responsibility boundaries,
