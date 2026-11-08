@@ -26,7 +26,9 @@ organization. A Cluster name alone creates no requirement for a `cluster.toml`.
 | `CONTRIBUTING.md` | Local contribution details, when needed |
 | `docs/architecture/` | Design decisions and enduring contracts, when needed |
 
-Use the language's normal package layout. Add source, test, example and script
+Use the language's normal package layout and apply the
+[code organization convention](code-organization.md) recursively within every
+module, file, type and function. Add source, test, example and script
 directories when they have a defined purpose. Describe ownership, failure
 conditions and unsafe preconditions next to the relevant API. Use Issues for
 future work, PRs for change rationale and verification, and CI artifacts or
