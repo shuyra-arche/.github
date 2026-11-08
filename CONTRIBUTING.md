@@ -25,7 +25,9 @@ the scope, commit, interface constraints, checks and open problems. Agents follo
 the same review and validation rules. Use actual check output as evidence.
 
 Keep repository-specific `AGENTS.md` guidance focused on local entry points and
-exceptions. Get task authorization for settings changes, merges, closing
+exceptions. Each new agent session follows the
+[startup procedure](docs/engineering/agent.md) through the repository's root
+`AGENTS.md`. Get task authorization for settings changes, merges, closing
 unrelated work or repository retirement.
 
 See the [engineering standards](docs/engineering/README.md) for the full policy.
