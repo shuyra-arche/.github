@@ -8,7 +8,21 @@ That's not surprising. Understanding is always incomplete, and not every problem
 
 An imperfect model can still be useful. It gives an idea a shape that can be tested. Vague doubts become concrete questions. Even when the first guess turns out to be wrong, what was learned along the way still matters.
 
-But questioning doesn't have to mean throwing everything away. Something that holds up under testing deserves to stay. And when a better explanation arrives, past effort doesn't have to become a reason to defend the old approach.
+## The Principle of Revisability
+
+*Nothing already built should decide what may be built next.*
+
+A conclusion can be accepted without becoming unquestionable.
+
+No abstraction is sacred. No architecture is final. Past achievements do not place an idea beyond criticism.
+
+Every decision remains open to examination, including the principles behind it.
+
+Questioning a conclusion does not mean rejecting it. Preserving a conclusion does not mean keeping it forever.
+
+**Coherence, not permanence.**
+
+The past can guide the future without closing its possibilities.
 
 Clear boundaries help each part keep track of its own responsibilities. They reduce accidental interference and make new combinations less fragile. A boundary isn't always a restriction on creation; sometimes it's exactly what makes more experiments possible.
 
