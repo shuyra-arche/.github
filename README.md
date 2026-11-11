@@ -10,6 +10,7 @@ templates for `shuyra-arche`.
   compatibility and related work.
 - [Issue templates](.github/ISSUE_TEMPLATE/) cover reproducible problems and
   scoped proposals.
+- [Visual identity](assets/identity/depth/README.md) provides the DEPTH mark and avatar vectors.
 - [Organization profile](profile/README.md) presents Shuyra's principles.
   [Chinese edition](profile/README.zh-CN.md) and
   [full manifesto](profile/manifesto.md) are maintained separately.
