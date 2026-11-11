@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/identity/depth/svg/shuyra-depth-white.svg">
+  <img src="../assets/identity/depth/svg/shuyra-depth-black.svg" alt="Shuyra emblem" width="144" height="144">
+</picture>
+
 # Shuyra
 
 *A Design for Coherence.*

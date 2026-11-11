@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440" role="img"><title>Shuyra — DEPTH</title><rect width="440" height="440" fill="#101010"/><g fill="none" stroke="#f8f8f8" stroke-width="10" stroke-linecap="butt" stroke-linejoin="round">
+<circle cx="220" cy="220" r="140"/>
+<circle cx="290" cy="220" r="70"/>
+<path d="M220 80 A140 140 0 0 0 360 220"/>
+<path d="M80 220 A140 140 0 0 1 220 360"/>
+<circle cx="325" cy="220" r="35"/>
+</g></svg>
