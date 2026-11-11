@@ -2,20 +2,20 @@
 
 [Chinese version](manifesto.zh-CN.md)
 
-When we build something, we often discover that the idea in our heads was missing a few important details. An explanation that seemed complete runs into an exception. A boundary we thought was clear turns out not to be so clear after all.
+An idea can feel like an answer right up until it has to work. Then an unexpected case appears, a neat explanation develops an exception, or a boundary that seemed clear needs to be drawn again.
 
-That's normal. We can't know every answer in advance, and we don't want to pretend that we can.
+That's not surprising. Understanding is always incomplete, and not every problem can be anticipated before starting.
 
-So we try things. We turn an idea into something we can observe, use, and test. Then we change it as we learn. Even when our first guess turns out to be wrong, the understanding we gained along the way still matters.
+An imperfect model can still be useful. It gives an idea a shape that can be tested. Vague doubts become concrete questions. Even when the first guess turns out to be wrong, what was learned along the way still matters.
 
-But we don't want "always question everything" to become another rigid rule. If something works and we understand why, it deserves a chance to stay. The point of questioning isn't to keep everything unsettled. It's to avoid becoming trapped by yesterday's choices when we find a better explanation.
+But questioning doesn't have to mean throwing everything away. Something that holds up under testing deserves to stay. And when a better explanation arrives, past effort doesn't have to become a reason to defend the old approach.
 
-We care about boundaries for much the same reason. When different parts can stand on their own and know what they're responsible for, they can cooperate more safely. And when we can connect them in new ways, we leave room for structures we didn't plan beforehand.
+Clear boundaries help each part keep track of its own responsibilities. They reduce accidental interference and make new combinations less fragile. A boundary isn't always a restriction on creation; sometimes it's exactly what makes more experiments possible.
 
-Coherence doesn't mean that everything has to look alike, or that nothing may change. It means the choices we've made should make sense together. When something fails, we want to know why. When we revise a design, we want to understand what we're changing.
+Coherence isn't about making everything look alike or keeping every decision forever. It's about understanding why a design fits together, which parts are reliable, and which are still uncertain. When something goes wrong, there should be a way to understand why.
 
-If we don't know something, we can say so. If we get something wrong, we can try to understand and fix it. If someone sees a better way, we want to hear the reasoning.
+Unanswered questions can stay unanswered for a while. Guesses can be tested, mistakes can be fixed, and a different point of view might reveal something new.
 
-And if we someday find that these words no longer describe how we think, we can change them, too.
+These words are only a current understanding, too. If a better way to put them emerges, they can change.
 
-**We build, we understand, we revise, and we build again.**
+**Make an idea real, try to understand it, and change it as needed. There is meaning in the process itself.**

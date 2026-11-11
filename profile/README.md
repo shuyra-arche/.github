@@ -4,22 +4,20 @@
 
 [Chinese version](README.zh-CN.md)
 
-We like making ideas real.
+Some ideas make perfect sense until they are actually built.
 
-Often, we think we understand something until we actually try building it. Then we notice what we missed. We change a few things and see if they work better. Sometimes we start over. Sometimes the old idea turns out to be just fine.
+Understanding always has limits. But there is no need to figure everything out before trying. Making something that works, seeing what happens, and learning from the result often reveals more than guessing ever could.
 
-We don't expect to understand the whole world. But we don't have to understand everything before we begin.
+Sometimes a design needs to be rebuilt. Sometimes the original approach is already good. Questioning isn't about rejecting everything. It's about leaving room to choose differently when a better explanation turns up.
 
-We like clear boundaries. They let different parts work together safely. We also like finding new ways to combine things, because someone else will always imagine something we didn't.
+Clear boundaries help separate parts work together safely without losing their independence. Freedom to combine those parts makes room for structures nobody had planned in advance.
 
-Coherence, to us, isn't about finding one perfect structure that never changes. It's about being able to explain the choices we've made, and leaving room to make different ones when we learn more.
+Coherence doesn't mean never changing anything. It's being able to explain why the pieces fit, notice where they might fail, and know what can be changed.
 
-Of course, questioning isn't about rejecting everything. Good ideas are worth keeping, and there's no need to defend a mistake just because it was ours.
+Even these words may change someday.
 
-We might change our minds about these words, too.
-
-**We don't need order to last forever. We just want the freedom to build it again.**
+**Order doesn't have to last forever. What matters is being free to build it again.**
 
 ---
 
-[A little more about how we think](manifesto.md) · [Contributing](../CONTRIBUTING.md)
+[A few more thoughts](manifesto.md) · [Contributing](../CONTRIBUTING.md)
