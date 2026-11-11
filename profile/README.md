@@ -2,50 +2,22 @@
 
 *A Design for Coherence.*
 
-[Read in Chinese](README.zh-CN.md)
+[Chinese version](README.zh-CN.md)
 
-## Manifesto
+Some ideas make perfect sense until they are actually built.
 
-We cannot fully comprehend reality, so we claim no final answers.
+Understanding always has limits. But there is no need to figure everything out before trying. Making something that works, seeing what happens, and learning from the result often reveals more than guessing ever could.
 
-We build to understand, test to discover the limits of our understanding, and revise when those limits become clear.
+Sometimes a design needs to be rebuilt. Sometimes the original approach is already good. Questioning isn't about rejecting everything. It's about leaving room to choose differently when a better explanation turns up.
 
-Through boundaries, we establish safety. Through composition, we create order. Through questioning, we preserve the possibility of change.
+Clear boundaries help separate parts work together safely without losing their independence. Freedom to combine those parts makes room for structures nobody had planned in advance.
 
-We value what already works, but do not treat it as beyond revision.
+Coherence doesn't mean never changing anything. It's being able to explain why the pieces fit, notice where they might fail, and know what can be changed.
 
-**We do not demand eternal order. We demand the freedom to create it.**
+Even these words may change someday.
 
-## In Plain Words
-
-### We build to understand
-
-We do not need to understand everything before we begin. Building something lets us test our ideas against reality. What works teaches us; so does what fails.
-
-Creation is not only the result of understanding. It is one way understanding grows.
-
-### We question with purpose
-
-We can be wrong, even about ideas we have defended or spent years developing. But questioning is not a demand to change everything.
-
-A revision should bring clearer understanding, more reliable behavior, or new possibilities. Keeping a sound design is as deliberate a choice as replacing it.
-
-### Boundaries make freedom possible
-
-Clear boundaries allow independent parts to cooperate without surrendering their responsibilities. With safe ways to connect and combine them, people can create forms of organization that no one prescribed in advance.
-
-Constraints are not necessarily opposed to freedom. The right constraints can make freedom practical.
-
-### Coherence is not permanence
-
-We seek structures whose responsibilities, assumptions, and limitations can be understood together. When evidence changes, we are willing to change the structure. When something has earned trust, we are willing to preserve it.
-
-### We remain accountable
-
-We distinguish evidence from aspiration, make uncertainty visible, and take responsibility for what we build. The principles on this page are open to examination, too.
-
-**We build. We understand. We revise. And we build again.**
+**Order doesn't have to last forever. What matters is being free to build it again.**
 
 ---
 
-[Read the full manifesto](manifesto.md) · [Contribution guidelines](../CONTRIBUTING.md)
+[A few more thoughts](manifesto.md) · [Contributing](../CONTRIBUTING.md)
