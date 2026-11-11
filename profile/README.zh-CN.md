@@ -1,9 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../assets/identity/depth/svg/shuyra-depth-white.svg">
-  <img src="../assets/identity/depth/svg/shuyra-depth-black.svg" alt="圜的标识" width="144" height="144">
+  <source media="(prefers-color-scheme: dark)" srcset="../assets/identity/depth/svg/shuyra-lockup-white.svg">
+  <img src="../assets/identity/depth/svg/shuyra-lockup-black.svg" alt="Shuyra / 圜 / Σχύρα" width="540">
 </picture>
-
-# 圜
 
 *一种关于一致性的设计。*
 
