@@ -10,7 +10,9 @@ templates for `shuyra-arche`.
   compatibility and related work.
 - [Issue templates](.github/ISSUE_TEMPLATE/) cover reproducible problems and
   scoped proposals.
-- [Organization profile](profile/README.md) introduces Shuyra's projects.
+- [Organization profile](profile/README.md) presents Shuyra's principles.
+  [Chinese edition](profile/README.zh-CN.md) and
+  [full manifesto](profile/manifesto.md) are maintained separately.
 
 GitHub uses these community files as defaults for eligible repositories.
 Repository-local files can provide their own guidance or templates. Repository
