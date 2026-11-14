@@ -54,6 +54,52 @@ slot that can be reused should not silently double as the stable identity
 of a software object. Fix the ownership and transition model before moving
 files or adding wrappers.
 
+## Explicit state modeling and functional transitions
+
+When correctness depends on an object's changing state, make the legal states,
+events and transitions explicit enough to inspect independently of the
+operations that trigger them. Prefer a **functional style for transition
+decisions**: describe what a transition means before performing its effects.
+This is a modeling preference, not a requirement to make every function pure.
+
+- Represent mutually exclusive states and their associated data with types,
+  such as enum variants, rather than combinations of flags that admit
+  impossible states. Keep genuinely independent properties independent; do not
+  invent a single state machine where several concerns have distinct owners.
+- Where a transition has nontrivial rules, prefer a decision function whose
+  inputs are the current state, an event and any required read-only context.
+  Its output should describe the next state, rejection or intended effects.
+  Conceptually, `State × Event → Transition`. The decision should not mutate
+  shared state or perform I/O. An ordinary method is fine for simple,
+  self-contained changes; do not create a transition framework for its own sake.
+- Keep authorization and commitment with the owner of the invariant. A
+  transition computed from a snapshot is a *proposal*, not permission to apply
+  it later. Revalidate assumptions, identities and revisions at the commit
+  boundary under the required synchronization. Specify how concurrent events,
+  retries and stale decisions are resolved.
+- Separate decisions from effects when doing so improves reasoning. Effects
+  such as page-table changes, hardware commands, notifications and I/O have
+  ordering and failure semantics that a pure function cannot enforce. Name
+  their executor, required preconditions, completion evidence and the point
+  at which the new state becomes authoritative. Handle partial execution with
+  rollback, compensation or an explicit recoverable intermediate state.
+- Make rejected events, repeated events, cancellation and terminal states
+  intentional. Do not silently accept an illegal transition or infer success
+  merely because an external operation was requested. Verify important legal
+  and illegal transitions, including races and failures, at the smallest
+  meaningful boundary.
+- Keep state representations, transition decisions and commit operations
+  close to their semantic owner. A pure helper may be extracted when it makes
+  the rule easier to test or understand, not to manufacture layers of
+  indirection or a universal event-processing abstraction.
+
+For a nontrivial state machine, a useful design sketch is
+`decide(&State, Event) -> Result<Transition, Error>`, followed by an
+owner-controlled commit that validates and executes the proposed transition.
+This sketch is not a mandatory Rust signature or a promise of atomic hardware
+effects. Choose the smallest implementation that keeps the invariant and
+failure boundary visible.
+
 ## Group by ownership and invariants
 
 - Organize around the object or mechanism that owns a state transition,
@@ -132,6 +178,8 @@ Before introducing or moving code, check:
 6. Which invalid combinations are excluded by types, and which need runtime
    checks? Are failure, cancellation, stale references and exhaustion handled
    at the relevant ownership boundary?
+7. For nontrivial state changes, are decisions, commit authority and effects
+   distinguishable? What invalidates a proposed transition before commit?
 
 Do not impose universal file-length, file-count or type-count limits.
 Optimize for local comprehension and stable responsibility boundaries,
