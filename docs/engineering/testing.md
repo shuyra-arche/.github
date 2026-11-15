@@ -65,38 +65,54 @@ composition boundary that owns the contract. A lasting test protects behavior,
 not the current path of its implementation. Repositories need not use identical
 Server source layouts or test suite names.
 
-By default, use a top-level Rust test file as the suite entry point and a
-same-named subdirectory for its child modules:
+Prefer one explicit suite entry per meaningful domain or independent
+compilation boundary. Do not use the same stem for a file and a sibling
+directory: `tests/memory.rs` beside `tests/memory/` is not an accepted
+layout. Put the suite entry in the domain directory as `mod.rs` and place
+related cases beside it:
 
 ```text
 server/
 ├── src/
 │   └── ...
+├── Cargo.toml
 └── tests/
-    ├── memory.rs
     ├── memory/
+    │   ├── mod.rs
     │   ├── mapping.rs
     │   ├── ownership.rs
     │   └── fault.rs
-    ├── ipc.rs
     ├── ipc/
+    │   ├── mod.rs
     │   ├── transfer.rs
     │   └── communication.rs
     └── support/
         └── mod.rs
 ```
 
-For example, `tests/memory.rs` declares `mod mapping;`, `mod ownership;`,
-and `mod fault;`. Cargo treats each `.rs` file directly under `tests/` as
-an integration-test target; nested files are modules of that target, not
-independent targets. Shared support belongs under `tests/` and is included only
-by the suites that use it. Do not create empty directories or mirror the entire
-source tree.
+For example, `tests/memory/mod.rs` declares `mod mapping;`,
+`mod ownership;` and `mod fault;`. Cargo needs explicit test target
+declarations for these non-root entry paths, relative to the Package manifest:
 
-When meaningful host suites require separate Cargo compilation boundaries,
-such as incompatible fixture roots, conditional compilation or target settings,
-the owning Package may declare explicit nested `[[test]]` entry points instead
-of forcing unrelated cases into one top-level test target:
+```toml
+[[test]]
+name = "memory"
+path = "tests/memory/mod.rs"
+
+[[test]]
+name = "ipc"
+path = "tests/ipc/mod.rs"
+```
+
+If the Package itself is rooted at `server/tests/Cargo.toml`, use
+`path = "memory/mod.rs"` instead. A standalone `tests/abi.rs` is
+acceptable when there is no sibling `tests/abi/` directory and no
+submodules are needed. Do not create wrapper files merely to satisfy
+Cargo's auto-discovery rules.
+
+For deep source-aligned suites or different host compilation boundaries,
+including incompatible fixture roots, conditional compilation or target
+settings, use an explicit nested entry without flattening unrelated cases:
 
 ```toml
 [[test]]
@@ -104,32 +120,35 @@ name = "nest-fault"
 path = "tests/basis/nest/fault/mod.rs"
 ```
 
-This is an exception to the top-level entry default, not a requirement to
-create one test target per source module or file. Keep these suites and their
-fixtures under `tests/`, document the isolation reason, and make their
-commands and CI selection discoverable. Such an entry point is a host test
-unless it is an explicitly configured target-only guest Package.
+Nested entries do not require one test target per source module or file.
+Keep fixtures under `tests/`, document genuine suite isolation, and make
+focused commands and CI selection discoverable. A suite entry configured
+with `[[test]]` is a host test unless it is part of a separately configured
+target-only guest Package. Do not create empty directories or mirror the
+entire source tree for symmetry.
 
-For cross-repository or system scenarios, use the same convention in the
-composition owner:
+For cross-repository and system scenarios, use the same principles under
+the owning composition repository:
 
 ```text
 vanllia/
 └── tests/
-    ├── cluster.rs
     ├── cluster/
+    │   ├── mod.rs
     │   └── kernel/
-    │       ├── memory.rs
+    │       ├── mod.rs
     │       └── memory/
+    │           ├── mod.rs
     │           └── transfer.rs
-    ├── system.rs
     └── system/
+        ├── mod.rs
         ├── boot.rs
         └── recovery.rs
 ```
 
-The owning test entry point composes the nested modules. Do not create a
-parallel top-level `integration/` directory for test code.
+The composition owner explicitly registers its runnable suite entries and
+selects the Units needed by each scenario. Do not create a parallel top-level
+`integration/` directory for test code.
 
 ## no_std and Rust test execution
 
