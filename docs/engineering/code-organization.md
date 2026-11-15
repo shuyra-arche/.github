@@ -149,11 +149,16 @@ type and its behavior can live under a coherent parent concept. An
 established multiword term is acceptable when splitting it would change
 its meaning; naming must not obscure the domain model.
 
-Avoid duplicate directory/file stems such as `space/space.rs`.
+Do not introduce sibling files and directories with the same stem, such
+as `space.rs` beside `space/`, or repeated stems such as `space/space.rs`.
 For a directory-based Rust module, prefer `space/mod.rs` for the
 principal `Space` definition and behavior, with meaningful submodules
-only where justified. Do not create a file solely to hold a trivial
-declaration and another file solely to implement it.
+only where justified. Use the same rule for test suites: a directory-owned
+suite uses `tests/space/mod.rs`, not both `tests/space.rs` and
+`tests/space/`. Do not create a file solely to hold a trivial
+declaration and another file solely to implement it. Existing nonconforming
+paths can be migrated with the owning module; avoid unrelated mechanical
+renames that obscure behavior changes.
 
 Keep a module's entry point readable: declare its own principal
 responsibility, expose only necessary names and make navigation to
