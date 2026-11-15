@@ -58,8 +58,15 @@ modules in production source. A Package does not need a `tests/` directory
 unless it has a meaningful test to maintain.
 
 Organize each test tree by domain and behavior, not by individual source file.
-Use a top-level Rust test file as the suite entry point and a same-named
-subdirectory for its child modules:
+Keep test suites traceable to actual semantic owners in production source where
+useful: a single-owner test normally sits under the analogous test subtree,
+while a cross-owner invariant belongs with the owner that enforces it or the
+composition boundary that owns the contract. A lasting test protects behavior,
+not the current path of its implementation. Repositories need not use identical
+Server source layouts or test suite names.
+
+By default, use a top-level Rust test file as the suite entry point and a
+same-named subdirectory for its child modules:
 
 ```text
 server/
@@ -85,6 +92,23 @@ an integration-test target; nested files are modules of that target, not
 independent targets. Shared support belongs under `tests/` and is included only
 by the suites that use it. Do not create empty directories or mirror the entire
 source tree.
+
+When meaningful host suites require separate Cargo compilation boundaries,
+such as incompatible fixture roots, conditional compilation or target settings,
+the owning Package may declare explicit nested `[[test]]` entry points instead
+of forcing unrelated cases into one top-level test target:
+
+```toml
+[[test]]
+name = "nest-fault"
+path = "tests/basis/nest/fault/mod.rs"
+```
+
+This is an exception to the top-level entry default, not a requirement to
+create one test target per source module or file. Keep these suites and their
+fixtures under `tests/`, document the isolation reason, and make their
+commands and CI selection discoverable. Such an entry point is a host test
+unless it is an explicitly configured target-only guest Package.
 
 For cross-repository or system scenarios, use the same convention in the
 composition owner:
