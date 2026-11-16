@@ -1,266 +1,240 @@
-# Code organization convention
+# Code design convention
 
-Code organization follows **semantic locality** at every scale: Package,
-module, source file, type, implementation block and function. The same
-responsibility rule applies recursively, not just to top-level directories.
+Shuyra code should make correctness, responsibilities and costs possible to
+understand locally. A good abstraction reduces the knowledge needed to
+maintain an invariant; it does not merely reduce line count or hide
+dependencies.
 
-A reader should be able to find an object's state, invariants, valid
-transitions and principal behavior together. Do not make them reconstruct
-one concept from distant declarations and unrelated implementation files.
+Apply these principles recursively to packages, modules, source files,
+types, implementations and functions. They are criteria for judging a
+design, not a required arrangement of files or transition frameworks.
 
-## Keep invariant ownership explicit
+## Core principles
 
-**Fragmented invariant ownership** means that a correctness rule depends on
-several callers remembering an agreement, with no clear owner
-that enforces it. This is an architectural problem even when the directory
-tree looks modular. Its symptoms include duplicated authoritative records,
-unrelated identities represented by the same integer, independently mutable
-fields that must change together, and cleanup that relies on a particular
-caller sequence.
+1. **Correctness before structure.** Invariants, authorization, resource
+   safety, observable contracts and failure recovery must survive refactors.
+   A cleaner layout or shorter critical section proves none of these.
+2. **Concepts determine boundaries.** Group facts by real responsibility
+   and the invariants they maintain, not by field count, source length,
+   operation verb or superficial symmetry.
+3. **State is explicit and local.** Keep meaningful states and legal
+   transitions inspectable near their owner. Independent concerns can
+   evolve independently; do not invent a universal state machine.
+4. **Dependencies are direct and directional.** Use the actual owners
+   required by an operation, as narrowly and visibly as possible.
+   Coordinate cross-owner changes at the nearest real operation boundary.
+5. **Synchronization protects invariants, not structures.** Choose
+   exclusion and commit scopes for shared facts and atomicity requirements.
+   Types, state machines, allocations and physical locks need not match
+   one-to-one.
+6. **Costs and outstanding obligations have owners.** Resource growth,
+   in-flight effects, retries, cleanup and reclamation remain accountable
+   after failures, cancellation and shutdown.
 
-Align the semantic boundary with the state representation, transition
-interface and synchronization boundary:
+These principles have priorities. Correctness and resource safety are
+requirements, never tradeoffs for elegance or speed. Within those
+constraints, choose faithful semantic boundaries before visual symmetry,
+and smaller local models before extra abstraction. A wider scope is
+justified only by the invariant or contract that genuinely requires it.
+Claimed performance improvements need evidence.
 
-- Give each mutable fact one authoritative representation and each invariant
-  an explicit enforcing owner. Shared references can refer to that owner;
-  copied records must not become competing authorities. A snapshot is an
-  observation with a defined freshness contract, not live authorization.
-- Represent mutually exclusive states and their associated data together.
-  Use distinct types for values with different meanings, such as object
-  identity, hardware slot and revision. Independent concerns can remain
-  separate; moving arbitrary fields into a `State` or `Life` wrapper does
-  not establish an invariant.
-- Keep state private where possible and route every mutation path through
-  the enforcing interface. When separating a pure decision from effects,
-  specify what must be revalidated before application and who handles
-  partial failure or rollback. State the synchronization that prevents
-  observers from seeing an invalid intermediate state.
-- Make identity allocation and reuse policies explicit. Distinguish a
-  non-reusing sequence, a recyclable finite pool and a generational handle;
-  specify exhaustion and stale-reference behavior. Add a generational
-  allocator only when actual slot reuse and handle validation require it.
-- Model lifetime, authority, publication and safe reclamation separately
-  when their conditions differ. A reference count proves storage is still
-  retained, not that access remains authorized. Cancellation or business
-  completion alone does not prove asynchronous work can no longer touch
-  a resource; name the evidence required before reclamation.
-- For an invariant spanning several owners, identify the coordinating
-  operation and its commit, failure and concurrency rules. One semantic
-  owner does not require one global manager or one global lock.
+## Classify facts before grouping fields
 
-For example, a permission record should own revocation state rather than
-requiring every copied permission view to be updated. A hardware address-space
-slot that can be reused should not silently double as the stable identity
-of a software object. Fix the ownership and transition model before moving
-files or adding wrappers.
+Identify what each field represents before designing its container:
 
-## Explicit state modeling and functional transitions
+| Fact | Question to answer |
+| --- | --- |
+| Identity | What does it identify; how is it allocated and reused? |
+| Authoritative state | Who can mutate it, and which invariant governs that mutation? |
+| Local lifecycle | Which phases and associated data belong to this object? |
+| Independent property | Can it change without participating in another transition? |
+| Index or cache | Which owner supplies its truth and invalidation rules? |
+| Snapshot or observation | How fresh is it, and can it be mistaken for live authority? |
+| Synchronization or completion evidence | What exact exclusion, revision or event does it prove? |
+| Retained obligation | Who must finish or recover it if the caller disappears? |
 
-When correctness depends on an object's changing state, make the legal states,
-events and transitions explicit enough to inspect independently of the
-operations that trigger them. Prefer a **functional style for transition
-decisions**: describe what a transition means before performing its effects.
-This is a modeling preference, not a requirement to make every function pure.
+Each mutable fact has one authoritative representation and each invariant
+one enforcing owner. Derived records, weak discovery structures and cached
+snapshots must not become competing authorities. Keep state private where
+possible; make every mutation path preserve the owner's invariants.
 
-- Represent mutually exclusive states and their associated data with types,
-  such as enum variants, rather than combinations of flags that admit
-  impossible states. Keep genuinely independent properties independent; do not
-  invent a single state machine where several concerns have distinct owners.
-- Where a transition has nontrivial rules, prefer a decision function whose
-  inputs are the current state, an event and any required read-only context.
-  Its output should describe the next state, rejection or intended effects.
-  Conceptually, `State × Event → Transition`. The decision should not mutate
-  shared state or perform I/O. An ordinary method is fine for simple,
-  self-contained changes; do not create a transition framework for its own sake.
-- Keep authorization and commitment with the owner of the invariant. A
-  transition computed from a snapshot is a *proposal*, not permission to apply
-  it later. Revalidate assumptions, identities and revisions at the commit
-  boundary under the required synchronization. Specify how concurrent events,
-  retries and stale decisions are resolved.
-- Separate decisions from effects when doing so improves reasoning. Effects
-  such as page-table changes, hardware commands, notifications and I/O have
-  ordering and failure semantics that a pure function cannot enforce. Name
-  their executor, required preconditions, completion evidence and the point
-  at which the new state becomes authoritative. Handle partial execution with
-  rollback, compensation or an explicit recoverable intermediate state.
-- Make rejected events, repeated events, cancellation and terminal states
-  intentional. Do not silently accept an illegal transition or infer success
-  merely because an external operation was requested. Verify important legal
-  and illegal transitions, including races and failures, at the smallest
-  meaningful boundary.
-- Keep state representations, transition decisions and commit operations
-  close to their semantic owner. A pure helper may be extracted when it makes
-  the rule easier to test or understand, not to manufacture layers of
-  indirection or a universal event-processing abstraction.
+Facts that must change together can belong under one owner even when they
+describe different concepts. Truly independent properties need not share
+one lifecycle. One owner can contain multiple small state machines, and
+multiple local machines can share one allocation or lock. Conversely,
+wrapping unrelated fields in `State`, `Life` or nominal sub-managers does
+not give them a new invariant.
 
-For a nontrivial state machine, a useful design sketch is
-`decide(&State, Event) -> Result<Transition, Error>`, followed by an
-owner-controlled commit that validates and executes the proposed transition.
-This sketch is not a mandatory Rust signature or a promise of atomic hardware
-effects. Choose the smallest implementation that keeps the invariant and
-failure boundary visible.
+Do not use one untyped integer for unrelated identities such as an object
+ID, hardware slot and revision. Distinguish non-reusing sequences, finite
+recyclable slots and generational handles; specify exhaustion and stale
+reference behavior. Do not add generations unless reuse needs them.
 
-## Local state machines and direct dependencies
+Lifetime, authorization, publication and safe reclamation can have
+different conditions. A reference count proves retained storage, not
+permission to access it. Cancellation or caller completion does not prove
+that asynchronous users have stopped touching a resource.
 
-Reduce the scope needed to understand an operation before reducing its lock
-scope. Keep state at the smallest real semantic owner that can enforce its
-invariant. Promote only genuinely shared facts and cross-owner constraints;
-shared storage or a hardware batch does not require centralizing every
-participant's state machine.
+## Model transitions where they belong
 
-- A local rule should be understandable and changeable near its owner. An
-  operation on one member should not inspect, scan or lock unrelated members
-  merely because they share a container. Shared address conflicts, quotas,
-  indices and hardware domains remain shared where their invariants require it.
-- Keep each state representation, legal transitions and principal behavior
-  together. A local transition uses its own state and explicit inputs; it
-  does not secretly acquire foreign locks, look up global services, wait for
-  hardware or invoke arbitrary callbacks. Simple transitions can be ordinary
-  methods, without a mandatory event/decision/executor framework.
-- Let the concrete operation hold or obtain narrow, direct dependencies on
-  actual owners. Do not shuttle unrelated variables through forwarding layers,
-  follow circular parent/manager lookup chains, or hide the same dependencies
-  in an all-purpose Context or service locator. Requests, expected revisions,
-  live authorization and synchronization witnesses remain explicit where used.
-  Direct references establish reachability, not permission or completion.
-- Distinguish state-machine, storage, allocation and synchronization boundaries.
-  Several local machines may be ordinary values behind one local lock. Do not
-  require a file, heap allocation, reference count or physical lock per machine;
-  do not turn a collection or an immutable identity into a machine for symmetry.
-- Coordinate a cross-owner operation at the nearest concrete operation boundary.
-  Expose its participants, commit point and failure responsibility there rather
-  than distributing an implicit protocol among mutually calling objects. Do not
-  replace a large owner with nominal sub-managers that still require reading
-  the entire subsystem to understand one local change.
+Use types to represent mutually exclusive states and their associated
+data, rather than independent flags that permit impossible combinations.
+Keep genuinely independent properties independent; do not create an
+explosive combined enum just to put everything in one machine.
 
-## Synchronization and retained work
+A local transition should be understandable from its own state and
+explicit inputs. Ordinary methods are appropriate for simple changes.
+A complex rule may benefit from a side-effect-free decision, conceptually
+`State × Event -> Result<Transition, Error>`, but this is not a mandated
+Rust signature or a required decision/execute framework.
 
-Locks protect access to facts; retained state records work that is not finished.
-Do not use a long-held state lock as a substitute for modeling that work.
+A decision computed from a snapshot is a proposal, not permission to
+apply it later. The invariant owner validates live authority, identity,
+revision and assumptions when committing under appropriate synchronization.
+When effects such as page-table updates, I/O or notifications matter,
+expose their executor, visibility and completion points, ordering,
+partial-failure handling and retry behavior. Pure decisions do not
+make hardware effects atomic.
 
-- Keep critical sections explicit with scoped RAII guards; prefer lexical
-  blocks over chains of manual guard drops. Where typed acquisition is used,
-  borrow the actual permitted ancestor and target. Do not fabricate roots,
-  use raw access or hide reacquisition to bypass the ordering contract.
-  Audit error, cancellation, destructor and last-reference paths as well as
-  the successful path. A lock-order type does not prove live authority,
-  object identity, hardware completion or freedom from every wait cycle.
-- Keep expensive or fallible preparation, waiting, notifications and releases
-  that can touch other owners outside the relevant state critical section
-  where the contract permits. Revalidate after reacquisition or retain an
-  explicit guarantee across the gap. Necessary synchronized hardware writes
-  and shared commits remain protected; splitting a lock must not silently
-  change atomicity, revocation or partial-result semantics.
-- Before effects can escape, give every unfinished resource obligation an
-  enduring owner and reserve the capacity needed to retain or recover it.
-  Cancellation, timeout, revocation or loss of the caller must not erase that
-  obligation. Define duplicate execution, uncertain results and retry rules;
-  only matching completion evidence permits settlement and safe reuse.
-- Separate work selection from authoritative state: a registry or worker may
-  retain and schedule an owner, but must not copy its state machine or infer
-  completion from a wakeup. Closing admission must serialize with final
-  publication; cleanup must continue after ordinary callers disappear.
-  Historical handles may retain metadata; detach payloads whose obligations
-  have settled instead of retaining them solely for those handles.
-- Bound temporary preparation and retained work according to the mechanism's
-  capacity contract. An outer batch limit does not bound an inner scan,
-  allocation or destructor chain. Memory bounds and lock latency are different
-  properties: allocation-free code can still hold a lock too long. Measure
-  locality, contention and resource costs before claiming an improvement.
+Illegal events, duplicates, cancellation, stale decisions and terminal
+states must be intentional. Partial execution requires rollback,
+compensation or an explicit recoverable state. Keep states, transition
+rules and the operations using them in the same semantic neighborhood.
 
-## Group by ownership and invariants
+Names must describe real completion semantics. For example,
+`begin_release` is suitable only when release is admitted now and
+settled later; it is not a stylistic replacement for `release`.
+Prefer symmetrical operation names for genuinely dual operations, but
+meaning is more important than matching word lengths.
 
-- Organize around the object or mechanism that owns a state transition,
-  enforces an invariant or provides a coherent interface. Do not divide
-  code merely into declarations versus implementations, or into generic
-  `types/`, `impl/`, `helpers/`, `create/`, `update/` and `delete/` buckets.
-- Keep a type and its principal methods close together. Put a state
-  representation, transition rules and the operations that use them in
-  the same semantic neighborhood. Prefer explicit states and transitions
-  when they clarify correctness; do not hide state changes in scattered
-  methods.
-- Within a file, place related definitions and implementations together,
-  followed by tightly related helpers. Within an implementation block,
-  group operations by the behavior or invariant they maintain. Within a
-  function, keep each transformation understandable at its own scale.
-- Locate a helper near its sole use. Extract a shared helper only when
-  it has a meaningful, reusable responsibility; avoid forwarding layers
-  and re-export chains whose only purpose is to satisfy a layout.
-- Keep an object responsible for its own state and invariants. If a
-  manager accumulates methods that really belong to its members, move
-  those methods to their semantic owners before splitting files.
+## Local dependencies and cross-owner coordination
 
-## Module boundaries
+A local transition should not secretly acquire unrelated owners, look
+up global services, wait for external effects or run arbitrary callbacks.
+Use explicit inputs. An operation may hold narrow, direct references to
+the actual owners it needs when their lifetime and authority conditions
+are clear. Reachability alone proves neither authorization nor completion.
 
-A new module or file needs a reason beyond file length or a one-to-one
-mapping from type names to filenames. Split when an independent concept
-has meaningful state, invariants, lifecycle, interface or verification
-responsibility. Conversely, combine tiny fragments that must always be
-read together to understand a single concept.
+Avoid circular parent/manager lookups, forwarding layers that carry
+unrelated data, and all-purpose `Context` or service locators. Do not
+shuttle values through callers that do not use them. Equally, do not
+hide live authority checks, expected revisions or completion witnesses
+merely to shorten a signature.
 
-Do not solve an oversized module by moving arbitrary groups of methods
-into separate files with additional `impl` blocks for the same type.
-Do not solve scattered code by indiscriminately combining everything
-into an enormous `mod.rs`. First identify the actual owners and
-boundaries, then choose the smallest clear layout.
+For invariants spanning owners, identify the concrete coordinator,
+participants, validation, commit point and partial-failure responsibility.
+It may admit work under synchronization, prepare outside a critical
+section and later settle under revalidation. This is a reasoning pattern,
+not a mandatory API template.
 
-Distinct architecture backends, safety boundaries or generated
-implementations may justify separating a type's behavior; keep the
-connection and rationale discoverable.
+Global address conflicts, quotas, indices and hardware domains remain
+shared where correctness requires them. Sharing storage or batching
+hardware work does not require centralizing every participant's local
+state machine. A local operation should not scan or lock unrelated
+members without a correctness or measured implementation reason.
 
-## Naming and layout
+## Synchronization and outstanding work
 
-Choose short, concrete module names that describe one responsibility.
-Avoid mechanical combinations of multiple concepts in filenames such as
-`mapping_control_record.rs` or `source_authorization.rs` when the
-type and its behavior can live under a coherent parent concept. An
-established multiword term is acceptable when splitting it would change
-its meaning; naming must not obscure the domain model.
+Choose lock boundaries for the facts that must be observed or changed
+together, independently of types and source files. Use lexical scopes
+and RAII guards to make protected regions visible. Check acquisition
+cycles, error paths, cancellation, destruction, final references and
+shutdown as well as the successful path. Locks do not themselves prove
+live authority, exact identity or external completion.
 
-Do not introduce sibling files and directories with the same stem, such
-as `space.rs` beside `space/`, or repeated stems such as `space/space.rs`.
-For a directory-based Rust module, prefer `space/mod.rs` for the
-principal `Space` definition and behavior, with meaningful submodules
-only where justified. Use the same rule for test suites: a directory-owned
-suite uses `tests/space/mod.rs`, not both `tests/space.rs` and
-`tests/space/`. Do not create a file solely to hold a trivial
-declaration and another file solely to implement it. Existing nonconforming
-paths can be migrated with the owning module; avoid unrelated mechanical
-renames that obscure behavior changes.
+When the contract permits, perform expensive or fallible preparation,
+waiting, notifications, potentially cross-owner releases and unbounded
+iteration outside critical sections. Revalidate after reacquisition
+or retain a stated guarantee across the gap. Keep necessary atomic
+commits and synchronized hardware writes protected. A lock split must
+not silently alter revocation, observable atomicity or partial results.
 
-Keep a module's entry point readable: declare its own principal
-responsibility, expose only necessary names and make navigation to
-real submechanisms straightforward. Avoid both deep wrapper layers
-and a flat collection of unrelated files.
+Before an effect can escape, ensure its unfinished obligation has a
+durable owner and that the needed recovery capacity is reserved.
+Registries and workers may select and schedule that owner, but may not
+copy its authoritative state or infer settlement from a wakeup.
+Define exact operation or publication identity, repeated execution,
+late or uncertain completion, retry and safe reuse. Release resources
+only when matching evidence proves the relevant use is complete.
+
+Closing admission must serialize with final publication. Cleanup must
+continue if ordinary callers vanish. Do not require unbounded work
+or allocation in a last destructor to honor a routine obligation.
+Historical handles can retain metadata without retaining payloads
+whose obligations have already settled.
+
+## Bounds, costs and verification
+
+For Kernel, temporary memory per operation must have a determinable
+upper bound. Persistent growth needs an accountable owner and enforced
+quota or capacity. Allocation failure and recovery must also be safe
+and bounded. An outer batch limit does not bound an inner scan,
+allocation, destructor cascade or pending-work queue.
+
+Space bounds, elapsed time and lock duration are different properties.
+Allocation-free does not imply short critical sections. Choose data
+structures according to actual access patterns and complexity.
+Measure locality, contention, retained space and failure behavior
+before claiming an optimization.
+
+Tests protect enduring invariants and observable contracts, not
+arbitrary implementation shapes. Test consequential invalid
+transitions, stale proofs, failures and races at the smallest useful
+boundary. Follow the [testing convention](testing.md) for placement,
+execution and lifecycle. A structural refactor preserves contracts;
+an intentional contract change is declared and verified separately.
+
+## Names and source layout
+
+Use short, concrete names for stable domain concepts. Name operations
+for their actual action and completion state. Use consistent vocabulary
+and meaningful pairs; visual or character-count symmetry must not
+obscure semantics.
+
+Organize around the owner of an invariant or coherent behavior, not
+generic `types/`, `impl/`, `helpers/`, `create/`, `update/` or
+`delete/` buckets. Keep a type and principal methods close together.
+Put a helper near its sole use; extract reusable helpers when they own
+a meaningful responsibility. Avoid separating one type's methods
+across files solely to reduce file size or combining unrelated
+responsibilities into an enormous entry module.
+
+Introduce modules for independent concepts, lifecycles, safety
+boundaries, interfaces or verification responsibilities; not merely
+because a source file is long. Apply semantic locality inside modules,
+implementation blocks and functions, not only to the directory tree.
+
+Do not put a file and directory with the same sibling stem
+(`space.rs` beside `space/`), or a redundant file stem
+(`space/space.rs`). For a directory-owned Rust module, prefer
+`space/mod.rs` for its principal definition and add justified
+submodules. Apply the corresponding convention to tests; see
+[testing](testing.md). Migrate existing paths with their owners;
+avoid unrelated mass renaming.
+
+Do not impose universal file-length, module-count, method-count or
+type-count limits. A large coherent owner is better than several
+nominal managers; a small scattered invariant can still be a defect.
 
 ## Review questions
 
-Before introducing or moving code, check:
+1. Which facts are authoritative or derived, and who enforces each
+   invariant across every construction and mutation path?
+2. Which states exclude one another, which change independently, and
+   which invalid combinations should types rule out?
+3. Can the local rule be understood from its owner and explicit inputs,
+   without tracing unrelated managers or forwarding layers?
+4. Which constraints really cross owners, where is the commit point,
+   and who handles authorization changes or partial failure?
+5. What does each critical section protect, and what remains valid
+   when a guard is released? Are release and cancellation paths safe?
+6. Who retains unfinished work, and what exact evidence permits
+   settlement, reclamation and reuse?
+7. What bounds temporary and retained resources, and which costs
+   have actually been verified?
+8. Does the structure improve understanding without extra wrappers,
+   artificial naming symmetry or unnecessary compatibility scaffolding?
 
-1. Can a reader find this concept's state, invariants and behavior
-   without searching across unrelated files?
-2. Does each extracted module own a genuine responsibility, rather
-   than a syntactic category, operation verb or arbitrary slice?
-3. Who enforces each invariant, and can any construction or mutation path
-   bypass that owner? Are transitions near the state they govern?
-4. Does the layout remain understandable **inside** each module, type,
-   implementation block and function, not only in the directory tree?
-5. Did the change preserve observable behavior, interfaces and safety
-   invariants? If it changed semantics, is that change reviewed and
-   verified separately?
-6. Which invalid combinations are excluded by types, and which need runtime
-   checks? Are failure, cancellation, stale references and exhaustion handled
-   at the relevant ownership boundary?
-7. For nontrivial state changes, are decisions, commit authority and effects
-   distinguishable? What invalidates a proposed transition before commit?
-8. Can a local rule be understood and changed without reconstructing unrelated
-   owners? Which shared constraints actually justify a wider scope?
-9. Are direct dependencies narrow and visible, rather than forwarded through
-   unrelated layers or hidden behind a Context or circular lookup chain?
-10. Are state-machine and lock/allocation boundaries chosen independently?
-    What protects correctness while guards are absent, and who retains and
-    completes the work after cancellation, failure or shutdown?
-
-Do not impose universal file-length, file-count or type-count limits.
-Optimize for local comprehension and stable responsibility boundaries,
-not symmetry of directory shape.
+See [dependency](dependency.md) for contracts and cross-repository
+migration and [repository](repository.md) for repository-level
+boundaries.
