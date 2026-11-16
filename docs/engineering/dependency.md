@@ -55,6 +55,15 @@ Describe the public package's compatibility guarantees. After a stable
 `0.x`, state the compatibility policy and still record breaking changes.
 Document ABI compatibility and the migration path independently when relevant.
 
+Compatibility obligations follow the contract actually promised to consumers.
+Unpublished or explicitly experimental interfaces may change without historical
+compatibility wrappers; do not retain abandoned representations solely to
+support designs that were never contracted. Such changes must still identify
+affected consumers, update their pins, and verify the assembled revision set.
+A published preview or pre-1.0 contract may carry explicit guarantees: honor
+those guarantees or document and coordinate a deliberate breaking change.
+Relaxing compatibility never relaxes safety or resource invariants.
+
 ## Changes across repositories
 
 Explain new dependencies in the PR, including the capability they provide, the

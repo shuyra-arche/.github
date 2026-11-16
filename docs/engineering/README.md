@@ -7,7 +7,7 @@ Repository guidance can link here and describe local requirements or exceptions.
 | --- | --- |
 | [Repository](repository.md) | Ownership boundaries, naming, documentation and lifecycle |
 | [Agent guidance](agent.md) | Per-session loading of shared standards and repository instructions |
-| [Code organization](code-organization.md) | Invariant ownership and recursive semantic locality |
+| [Code design](code-organization.md) | Correctness, semantic owners, local state, dependencies and bounded resources |
 | [Branch](branch.md) | Branch names, protection and cleanup |
 | [Pull request](pull-request.md) | Titles, review, verification and merge |
 | [Release](release.md) | Release tags, channels and publication |
