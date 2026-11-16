@@ -100,6 +100,74 @@ This sketch is not a mandatory Rust signature or a promise of atomic hardware
 effects. Choose the smallest implementation that keeps the invariant and
 failure boundary visible.
 
+## Local state machines and direct dependencies
+
+Reduce the scope needed to understand an operation before reducing its lock
+scope. Keep state at the smallest real semantic owner that can enforce its
+invariant. Promote only genuinely shared facts and cross-owner constraints;
+shared storage or a hardware batch does not require centralizing every
+participant's state machine.
+
+- A local rule should be understandable and changeable near its owner. An
+  operation on one member should not inspect, scan or lock unrelated members
+  merely because they share a container. Shared address conflicts, quotas,
+  indices and hardware domains remain shared where their invariants require it.
+- Keep each state representation, legal transitions and principal behavior
+  together. A local transition uses its own state and explicit inputs; it
+  does not secretly acquire foreign locks, look up global services, wait for
+  hardware or invoke arbitrary callbacks. Simple transitions can be ordinary
+  methods, without a mandatory event/decision/executor framework.
+- Let the concrete operation hold or obtain narrow, direct dependencies on
+  actual owners. Do not shuttle unrelated variables through forwarding layers,
+  follow circular parent/manager lookup chains, or hide the same dependencies
+  in an all-purpose Context or service locator. Requests, expected revisions,
+  live authorization and synchronization witnesses remain explicit where used.
+  Direct references establish reachability, not permission or completion.
+- Distinguish state-machine, storage, allocation and synchronization boundaries.
+  Several local machines may be ordinary values behind one local lock. Do not
+  require a file, heap allocation, reference count or physical lock per machine;
+  do not turn a collection or an immutable identity into a machine for symmetry.
+- Coordinate a cross-owner operation at the nearest concrete operation boundary.
+  Expose its participants, commit point and failure responsibility there rather
+  than distributing an implicit protocol among mutually calling objects. Do not
+  replace a large owner with nominal sub-managers that still require reading
+  the entire subsystem to understand one local change.
+
+## Synchronization and retained work
+
+Locks protect access to facts; retained state records work that is not finished.
+Do not use a long-held state lock as a substitute for modeling that work.
+
+- Keep critical sections explicit with scoped RAII guards; prefer lexical
+  blocks over chains of manual guard drops. Where typed acquisition is used,
+  borrow the actual permitted ancestor and target. Do not fabricate roots,
+  use raw access or hide reacquisition to bypass the ordering contract.
+  Audit error, cancellation, destructor and last-reference paths as well as
+  the successful path. A lock-order type does not prove live authority,
+  object identity, hardware completion or freedom from every wait cycle.
+- Keep expensive or fallible preparation, waiting, notifications and releases
+  that can touch other owners outside the relevant state critical section
+  where the contract permits. Revalidate after reacquisition or retain an
+  explicit guarantee across the gap. Necessary synchronized hardware writes
+  and shared commits remain protected; splitting a lock must not silently
+  change atomicity, revocation or partial-result semantics.
+- Before effects can escape, give every unfinished resource obligation an
+  enduring owner and reserve the capacity needed to retain or recover it.
+  Cancellation, timeout, revocation or loss of the caller must not erase that
+  obligation. Define duplicate execution, uncertain results and retry rules;
+  only matching completion evidence permits settlement and safe reuse.
+- Separate work selection from authoritative state: a registry or worker may
+  retain and schedule an owner, but must not copy its state machine or infer
+  completion from a wakeup. Closing admission must serialize with final
+  publication; cleanup must continue after ordinary callers disappear.
+  Historical handles may retain metadata; detach payloads whose obligations
+  have settled instead of retaining them solely for those handles.
+- Bound temporary preparation and retained work according to the mechanism's
+  capacity contract. An outer batch limit does not bound an inner scan,
+  allocation or destructor chain. Memory bounds and lock latency are different
+  properties: allocation-free code can still hold a lock too long. Measure
+  locality, contention and resource costs before claiming an improvement.
+
 ## Group by ownership and invariants
 
 - Organize around the object or mechanism that owns a state transition,
@@ -185,6 +253,13 @@ Before introducing or moving code, check:
    at the relevant ownership boundary?
 7. For nontrivial state changes, are decisions, commit authority and effects
    distinguishable? What invalidates a proposed transition before commit?
+8. Can a local rule be understood and changed without reconstructing unrelated
+   owners? Which shared constraints actually justify a wider scope?
+9. Are direct dependencies narrow and visible, rather than forwarded through
+   unrelated layers or hidden behind a Context or circular lookup chain?
+10. Are state-machine and lock/allocation boundaries chosen independently?
+    What protects correctness while guards are absent, and who retains and
+    completes the work after cancellation, failure or shutdown?
 
 Do not impose universal file-length, file-count or type-count limits.
 Optimize for local comprehension and stable responsibility boundaries,
