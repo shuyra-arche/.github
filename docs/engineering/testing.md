@@ -247,6 +247,15 @@ third-party Actions to full commit SHAs.
 Distinguish host execution, target compilation, QEMU execution, and physical
 hardware execution: none is evidence that the others succeeded.
 
+A recorded execution verdict must distinguish **pass**, **fail**, **timeout**
+and **inconclusive** (insufficient or ambiguous evidence). A build, guest marker,
+console text, successful launcher exit, or a partially observed shutdown is not
+a substitute for the scenario owner's complete assertions and required native
+completion/retirement receipts. Missing, truncated, conflicting or unverifiable
+evidence must never become a pass; an owner may define a narrowly justified
+inconclusive retry policy only if the original attempt and its result remain
+visible. A retry that passes does not erase a failed first attempt.
+
 ## Test lifecycle during changes
 
 | Change | Expected action |
