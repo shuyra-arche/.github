@@ -34,17 +34,31 @@ and the remaining gap instead of adding a misleading test.
 
 ## Verification boundaries
 
-| Scope | Responsibility | Preferred form |
-| --- | --- | --- |
-| Repository | Local logic, public contracts, and declared build targets | Host integration tests and target compilation |
-| Cluster | Behavior shared by selected providers or repositories | Minimal cross-provider scenario |
-| System | Composition, boot, and runtime behavior of the assembled system | Targeted QEMU or hardware scenario |
+A test belongs to the owner of the invariant, public contract, or product
+behavior it verifies—not automatically to the tool that builds or executes it.
+The owner maintains its guest or fixture, assertions, supported execution
+conditions, and regression history. A consumer can own a contract test involving
+several providers without taking ownership of those providers' private tests.
+A product configuration owner can own acceptance of the assembled product.
 
-A Cluster is a source/build organization boundary, not a runtime Unit. Its
-integration tests select the Units needed to establish a contract. Tests belong
-with the Package or integration owner responsible for the behavior. Cross-repository
-and system tests belong to the repository that composes the relevant providers
-or system.
+| Scope | Test owner | Preferred form |
+| --- | --- | --- |
+| Repository | Package or provider responsible for the behavior | Host tests, target compilation, and focused target execution |
+| Cross-provider contract | Consumer or contract owner responsible for the observable boundary | Minimal scenario using selected real providers |
+| Product | Product configuration or acceptance owner | Boot and runtime scenarios against the selected assembled artifact |
+
+A Cluster is a source/build organization boundary, not a runtime Unit.
+It may select multiple providers for a test without becoming the semantic
+owner of their internal invariants.
+
+**Test ownership, execution tooling, and CI triggering are distinct.**
+Vanllia may discover provider-owned test declarations, select their dependency
+closure, build and run them, and preserve execution evidence. This does not
+transfer their scenario definitions, assertions, or Hart/profile matrices to
+Vanllia. Vanllia tests its own CLI, builder, resolver, runner, and platform
+Packages as their real owner; it must not maintain a central catalog of
+other repositories' private mechanism tests. A new provider test using an
+existing public execution contract should not require changing Vanllia.
 
 ## Test code placement
 
@@ -127,28 +141,36 @@ with `[[test]]` is a host test unless it is part of a separately configured
 target-only guest Package. Do not create empty directories or mirror the
 entire source tree for symmetry.
 
-For cross-repository and system scenarios, use the same principles under
-the owning composition repository:
+Cross-repository execution is not a reason to move the test into
+Vanllia. Place scenarios with the actual contract or product owner, even
+when they need providers from several repositories. For example:
 
 ```text
-vanllia/
+pipe/
 └── tests/
-    ├── cluster/
-    │   ├── mod.rs
-    │   └── kernel/
-    │       ├── mod.rs
-    │       └── memory/
-    │           ├── mod.rs
-    │           └── transfer.rs
-    └── system/
-        ├── mod.rs
-        ├── boot.rs
-        └── recovery.rs
+    └── roundtrip/
+        ├── Cargo.toml
+        ├── unit.toml
+        ├── test.toml
+        └── src/
+            └── main.rs
+
+system/
+└── server/
+    └── tests/
+        └── target/
+            └── handoff/
+                └── ...
 ```
 
-The composition owner explicitly registers its runnable suite entries and
-selects the Units needed by each scenario. Do not create a parallel top-level
-`integration/` directory for test code.
+The first is a provider-owned test Unit discoverable through Vanllia's
+existing declarations; the second represents owner-specific target tests
+which may require a different execution path. Neither example mandates a
+universal layout, test manifest, or runner for every kind of verification.
+Product-wide acceptance belongs with the product configuration or
+acceptance owner, even if it invokes Vanllia as its builder and executor.
+Do not create a parallel top-level `integration/` directory solely to
+reclassify tests already owned elsewhere.
 
 ## no_std and Rust test execution
 
@@ -186,8 +208,9 @@ with `doctest = false`; keep executable examples in the test tree instead.
    such as System only when required to start or connect those Units.
 3. Replace external dependencies with fixtures only if the behavior under test
    remains real. Do not mock away the contract being verified.
-4. Use the owning test suite's existing entry point; record selected Units,
-   dependency revisions, toolchain, and execution command.
+4. Use the scenario owner's entry point, which may invoke Vanllia.
+   Record the chosen Units, exact provider revisions, toolchain, and execution
+   command. Keep business-specific assertions at that owner.
 5. Assert the result and preserve enough evidence to reproduce a failure.
 
 Do not introduce a mandatory test DSL, manifest, orchestration service, or
@@ -201,12 +224,18 @@ Run verification according to cost and affected risk:
 | Stage | Typical checks | Trigger |
 | --- | --- | --- |
 | Fast | Formatting, applicable static checks, target compilation, and focused host tests | Every PR |
-| Affected scenario | Contract and cross-provider checks; minimal QEMU scenario when needed | PRs that alter the affected behavior or boundary |
+| Affected scenario | Owner-defined contracts and cross-provider checks; minimal QEMU scenario when needed | PRs that alter the affected behavior or boundary |
 | Full | Longer boot paths, multi-platform scenarios, recovery, and hardware tests | Scheduled verification or release preparation |
 
 A high-impact change must not bypass relevant verification merely because it
 is expensive. Select the smallest adequate check; if it cannot run before merge,
 state the unverified risk and obtain an explicit review decision.
+
+A provider's high-risk PR must verify its affected contract against the
+actual candidate revision before merge; a product's older pinned result is
+not substitute evidence. Keep scenario selection at its owner and execution
+reuse at the tool boundary; do not embed a provider-specific test matrix in
+Vanllia's CI.
 
 Do not make every PR boot the full OS. Keep required checks deterministic and
 bounded; move unrelated or costly coverage out of the fast stage. Code
