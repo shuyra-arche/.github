@@ -83,11 +83,17 @@ composition boundary that owns the contract. A lasting test protects behavior,
 not the current path of its implementation. Repositories need not use identical
 Server source layouts or test suite names.
 
-Prefer one explicit suite entry per meaningful domain or independent
-compilation boundary. Do not use the same stem for a file and a sibling
-directory: `tests/memory.rs` beside `tests/memory/` is not an accepted
-layout. Put the suite entry in the domain directory as `mod.rs` and place
-related cases beside it:
+Prefer a stable test entry per genuine compilation or execution boundary.
+Group ordinary tests in the suite's Rust module tree by their semantic
+owners; adding a test case or domain within that boundary should not
+require changing the Package manifest. Separate test targets are justified
+by independent build, linking, fixture or execution requirements, not
+merely by a new module or source file. Use the native test harness and
+its module-path filters rather than a custom test registry.
+
+Do not use the same stem for a file and a sibling directory:
+`tests/memory.rs` beside `tests/memory/` is not an accepted layout.
+Use `mod.rs` for a directory-owned module, and place related cases beside it:
 
 ```text
 server/
@@ -95,6 +101,7 @@ server/
 │   └── ...
 ├── Cargo.toml
 └── tests/
+    ├── contracts.rs
     ├── memory/
     │   ├── mod.rs
     │   ├── mapping.rs
@@ -108,42 +115,33 @@ server/
         └── mod.rs
 ```
 
-For example, `tests/memory/mod.rs` declares `mod mapping;`,
-`mod ownership;` and `mod fault;`. Cargo needs explicit test target
-declarations for these non-root entry paths, relative to the Package manifest:
+For example, `tests/contracts.rs` declares `mod memory;` and
+`mod ipc;`. Their `mod.rs` files declare the actual cases. Cargo can
+discover the root automatically, or the Package can declare one stable
+target when automatic discovery would also find independent fixtures
+or tools:
 
 ```toml
 [[test]]
-name = "memory"
-path = "tests/memory/mod.rs"
-
-[[test]]
-name = "ipc"
-path = "tests/ipc/mod.rs"
+name = "contracts"
+path = "tests/contracts.rs"
 ```
 
 If the Package itself is rooted at `server/tests/Cargo.toml`, use
-`path = "memory/mod.rs"` instead. A standalone `tests/abi.rs` is
-acceptable when there is no sibling `tests/abi/` directory and no
-submodules are needed. Do not create wrapper files merely to satisfy
-Cargo's auto-discovery rules.
+the corresponding path relative to that manifest. A standalone
+`tests/abi.rs` is acceptable when it protects a distinct boundary
+and no sibling `tests/abi/` directory exists. Do not create wrapper
+files merely to satisfy Cargo's auto-discovery rules.
 
-For deep source-aligned suites or different host compilation boundaries,
-including incompatible fixture roots, conditional compilation or target
-settings, use an explicit nested entry without flattening unrelated cases:
-
-```toml
-[[test]]
-name = "nest-fault"
-path = "tests/basis/nest/fault/mod.rs"
-```
-
-Nested entries do not require one test target per source module or file.
-Keep fixtures under `tests/`, document genuine suite isolation, and make
-focused commands and CI selection discoverable. A suite entry configured
-with `[[test]]` is a host test unless it is part of a separately configured
-target-only guest Package. Do not create empty directories or mirror the
-entire source tree for symmetry.
+Use ordinary nested Rust modules for deep source-aligned suites. An
+explicit nested entry or an independent test Package is appropriate when
+there is a genuine separate compilation boundary, such as incompatible
+fixture roots, build scripts or target settings. Keep fixtures under
+`tests/`, document genuine suite isolation, and make focused commands
+and CI selection discoverable. A suite configured with `[[test]]` is
+a host test unless it is part of a separately configured target-only
+guest Package. Do not create empty directories or mirror the entire
+source tree for symmetry.
 
 Cross-repository execution is not a reason to move the test into
 Vanllia. Place scenarios with the actual contract or product owner, even
@@ -194,6 +192,13 @@ details through public behavior where possible. Do not expose private items
 solely to satisfy a test. If a complex algorithm deserves an independent public
 boundary for real production reasons, it may be extracted into a separate
 `no_std` Package and tested through that boundary.
+
+For a Package supporting both host verification and freestanding targets,
+keep the ordinary Cargo test target usable on the host. Do not force a
+bare-metal target for the entire shared workspace merely for convenience.
+Select hardware targets explicitly in their build and verification commands;
+preserve target-specific flags. A bare-metal guest does not use the host
+`libtest` harness.
 
 Host tests do not validate privileged instructions or target hardware behavior.
 For target-only behavior, place a standalone `no_std` guest test package under
