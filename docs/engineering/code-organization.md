@@ -30,6 +30,9 @@ design, not a required arrangement of files or transition frameworks.
 6. **Costs and outstanding obligations have owners.** Resource growth,
    in-flight effects, retries, cleanup and reclamation remain accountable
    after failures, cancellation and shutdown.
+7. **Names form coherent systems.** Name related concepts as a system,
+   express genuine duals and inverse operations symmetrically, and keep
+   states, transitions and their associated types semantically consistent.
 
 These principles have priorities. Correctness and resource safety are
 requirements, never tradeoffs for elegance or speed. Within those
@@ -187,9 +190,30 @@ an intentional contract change is declared and verified separately.
 ## Names and source layout
 
 Use short, concrete names for stable domain concepts. Name operations
-for their actual action and completion state. Use consistent vocabulary
-and meaningful pairs; visual or character-count symmetry must not
-obscure semantics.
+for their actual action and completion state. Review names as a system
+within each module, not as isolated choices. Apply the same reasoning
+recursively to packages, modules, types, methods and local variables.
+
+- Express genuine duals consistently, such as `Open` / `Shut`, and
+  inverse operations such as `Split` / `Merge`. A dual is not necessarily
+  reversible; do not imply an inverse that the contract does not provide.
+- Name lifecycle states and their transitions together. Use the same
+  vocabulary for the same semantic event across operations, states and
+  modules; distinguish admission, completion and reclamation when they
+  are separate facts.
+- Build naming families around a stable concept, such as `Allocation`,
+  `AllocationId` and `AllocationRecord`. Distinguish an identity, authority,
+  observation, receipt and owned resource according to what each proves
+  or retains. Do not use different names merely to avoid repetition.
+- Let the enclosing scope supply context. A local `State` or `Error` is
+  sufficient when its owner is unambiguous; a name that crosses an owner
+  boundary should identify the relevant concept where necessary. Avoid
+  unnecessary abbreviations and generic names that conceal responsibility.
+
+Semantic symmetry is not visual symmetry. Do not invent matching types,
+methods, states or modules, or force equal word lengths, to complete a
+naming pattern. Different lifecycles may use different terms when their
+meanings differ. Naming must follow the actual contract, not determine it.
 
 Organize around the owner of an invariant or coherent behavior, not
 generic `types/`, `impl/`, `helpers/`, `create/`, `update/` or
@@ -234,6 +258,10 @@ nominal managers; a small scattered invariant can still be a defect.
    have actually been verified?
 8. Does the structure improve understanding without extra wrappers,
    artificial naming symmetry or unnecessary compatibility scaffolding?
+9. Do the names within each affected module form a coherent vocabulary?
+   Are actual duals, inverse operations, lifecycle transitions and related
+   types expressed consistently, with meaningful distinctions where their
+   contracts differ?
 
 See [dependency](dependency.md) for contracts and cross-repository
 migration and [repository](repository.md) for repository-level
