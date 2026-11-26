@@ -66,10 +66,14 @@ All executable test code, test fixtures, and test-only support code must live
 under a `tests/` directory in the owning Package or composition repository.
 Production source directories contain production code only.
 
-Do not place test modules or test bodies in `src/`. In particular, do not use
-inline `#[cfg(test)] mod tests`, `src/**/tests.rs`, or test-only fixture
-modules in production source. A Package does not need a `tests/` directory
-unless it has a meaningful test to maintain.
+Keep test bodies, fixtures and test-only support outside `src/`. When a
+consequential private invariant cannot be exercised through an existing public
+boundary, the owning production module may declare a test module using
+`#[cfg(test)]` and `#[path = "..."]`. The path must resolve to a source file
+under the owning Package's `tests/` directory. The declaration and an optional
+`#[cfg(test)] extern crate std;` at the library root may live in `src/`.
+Do not place inline test bodies or `src/**/tests.rs` in production source.
+A Package needs a `tests/` directory only when it has a test to maintain.
 
 Organize each test tree by domain and behavior, not by individual source file.
 Keep test suites traceable to actual semantic owners in production source where
@@ -176,7 +180,8 @@ reclassify tests already owned elsewhere.
 
 Production libraries keep `#![no_std]` unconditionally. Do not use
 `#![cfg_attr(not(test), no_std)]` to make the library become `std` during
-testing.
+testing. A library unit-test build may import `std` explicitly under `cfg(test)`
+for its external test modules while keeping the production library `no_std`.
 
 Cargo integration-test executables under `tests/` use the host test harness
 and may use `std`. The library under test is compiled as a normal dependency,
