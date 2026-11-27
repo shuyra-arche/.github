@@ -174,6 +174,28 @@ acceptance owner, even if it invokes Vanllia as its builder and executor.
 Do not create a parallel top-level `integration/` directory solely to
 reclassify tests already owned elsewhere.
 
+## Benchmark ownership
+
+Benchmarks measure cost under declared workloads and execution conditions;
+they do not replace invariant or contract tests. Measurement bodies and
+benchmark-only fixtures belong under `benches/` in their owning Package
+or composition repository. Tests of measurement infrastructure remain
+under `tests/`. Shared execution tooling may live with the test runner;
+separate CI entry points do not require separate machine implementations,
+workspaces or dependency locks.
+
+Organize benchmark workloads by the mechanism or behavior that owns them.
+Use the native benchmark target discovery of the chosen toolchain. Separate
+images when machine topology, initial state or resource retirement requires
+isolation; keep independent measurement series together when they genuinely
+share that boundary. Preserve raw observations and record the workload,
+environment and implementation revision separately. A change to an
+unrelated workload should not invalidate an otherwise comparable series.
+Do not claim hardware performance from emulator timing or infer correctness
+from a performance threshold. Run routine performance measurements only
+when explicitly useful; benchmark infrastructure changes still need
+appropriate verification.
+
 ## no_std and Rust test execution
 
 Production libraries keep `#![no_std]` unconditionally. Do not use
