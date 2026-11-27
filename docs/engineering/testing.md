@@ -185,10 +185,14 @@ separate CI entry points do not require separate machine implementations,
 workspaces or dependency locks.
 
 Organize benchmark workloads by the mechanism or behavior that owns them.
-Use the native benchmark target discovery of the chosen toolchain. Separate
-images when machine topology, initial state or resource retirement requires
-isolation; keep independent measurement series together when they genuinely
-share that boundary. Preserve raw observations and record the workload,
+Use the chosen toolchain's native build-target discovery. A shared executable
+entry may provide both a correctness behavior and a measurement behavior
+when it owns the same execution boundary. Select the actual behavior
+explicitly; run each purpose with independently prepared state. Do not
+duplicate the entry, its machine declaration, or its discovery metadata
+merely to distinguish those purposes. Separate images when machine topology,
+initial state or resource retirement requires isolation; keep independent
+measurement series together when they genuinely share that boundary. Preserve raw observations and record the workload,
 environment and implementation revision separately. A change to an
 unrelated workload should not invalidate an otherwise comparable series.
 Do not claim hardware performance from emulator timing or infer correctness
